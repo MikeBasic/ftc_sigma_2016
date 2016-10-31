@@ -32,13 +32,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
-
-import org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot;
 
 import static org.firstinspires.ftc.teamcode.HardwareSigma2016.fileLogger;
 
@@ -102,6 +99,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
     @Override
     public void runOpMode() {
 
+        /* -------- initializations ---------- */
         /*
          * Initialize the standard drive system variables.
          * The init() method of the hardware class does most of the work here
@@ -145,6 +143,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
         }
         gyro.resetZAxisIntegrator();
 
+        /* -------- driving to the predefined position ------- */
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
         // Put a hold after each turn
@@ -167,8 +166,8 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
         gyroDrive(DRIVE_SPEED, 30, 0.0);     // Drive REV 30 inches
 //        gyroHold(TURN_SPEED, 0.0, 0.5);   // Hold  0 Deg heading for a 1/2 second
 
-       // robot.pusherL.setPosition(1.0);            // S4: Stop and close the claw.
-       // robot.pusherR.setPosition(1.0);
+        // robot.pusherL.setPosition(1.0);            // S4: Stop and close the claw.
+        // robot.pusherR.setPosition(1.0);
         sleep(500);     // pause for servos to move
 
         telemetry.addData("Path", "Complete");
@@ -189,13 +188,26 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 //            idle();
 //        }
 
-//        Start the beacon light detection procedure
-        robot.beaconColorSensor.enableLed(false); //led OFF
+        /* ------ ultrasonic wall tracker + white line detection ------- */
+        double distanceFromWall;
         ElapsedTime holdTimer = new ElapsedTime();
-//         keep looping while we have time remaining.
         double holdTime = 10; //ten second time out
 
+        // keep looping while we have time remaining.
+        holdTimer.reset();
+        while (holdTimer.time() < holdTime) {
+            distanceFromWall = robot.ultrasonicSensor.getUltrasonicLevel();
+            telemetry.addData("UltraSound level: ", "%.2f", distanceFromWall);
+            telemetry.update();
 
+            sleep(100);
+            idle();
+        }
+
+        /* ------ Start the beacon light detection and button pushing procedure  --------- */
+        robot.beaconColorSensor.enableLed(false); //led OFF
+
+        // keep looping while we have time remaining.
         holdTimer.reset();
         while (holdTimer.time() < holdTime) {
             int red, green, blue;
@@ -210,13 +222,16 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 //            fileLogger.logLine("Red " + robot.beaconColorSensor.red());
 //            fileLogger.logLine("Blue " + robot.beaconColorSensor.blue());
 //            fileLogger.logLine("Green " + robot.beaconColorSensor.green());
-            if((red > 50) && (green < 20) && (blue < 20)){ //red
+
+            // red color detected
+            if ((red > 50) && (green < 20) && (blue < 20)) { //red
                 robot.pusherL.setPosition(1);
                 sleep(500);
                 //wait servo to finish
             }
 
-            if((red < 20) && (green < 20) && (blue < 50)){
+            // blue color detected
+            if ((red < 20) && (green < 20) && (blue > 50)) {
                 robot.pusherR.setPosition(1);
                 sleep(500);
                 //wait servo to finish
@@ -412,8 +427,8 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
         }
 
         // Send desired speeds to motors.
-     //   robot.frontLeftMotor.setPower(leftSpeed);
-       // robot.frontRightMotor.setPower(rightSpeed);
+        //   robot.frontLeftMotor.setPower(leftSpeed);
+        // robot.frontRightMotor.setPower(rightSpeed);
         //robot.backLeftMotor.setPower(leftSpeed);
         // //robot.backRightMotor.setPower(rightSpeed);
 
@@ -453,5 +468,4 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
     public double getSteer(double error, double PCoeff) {
         return Range.clip(error * PCoeff, -1, 1);
     }
-
 }
