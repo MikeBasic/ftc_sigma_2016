@@ -95,6 +95,8 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
     static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
     static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
 
+    static final double TARGET_WALL_DISTANCE = 0.5;  // ultrasound sensor reading for x inch away from wall
+    static final double WALL_DISTANCE_THRESHOLD = 0.1; // no need to adjust if wall distance is within range
 
     @Override
     public void runOpMode() {
@@ -467,5 +469,112 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
      */
     public double getSteer(double error, double PCoeff) {
         return Range.clip(error * PCoeff, -1, 1);
+    }
+
+    /**
+     * Method to track along a wall using an ultrasonic sensor
+     * Move will stop if either of these conditions occur:
+     * 1) Move gets to the desired distance (timeout if no white line found)
+     * 2) Driver stops the opmode running.
+     * 3) White line on the ground is detected and aligned by the light sensors
+     *
+     * @param speed    Target speed for forward motion.  Should allow for _/- variance for adjusting heading
+     * @param distance Distance (in inches) to move from current position.  Negative distance means move backwards.
+     */
+    public void wallTrackingToWhiteLine(double speed,
+                                        double distance) {
+
+        int newLeftTarget;
+        int newRightTarget;
+        int moveCounts;
+        double max;
+        double error;
+        double steer = 0;
+        double leftSpeed;
+        double rightSpeed;
+        double ultraSoundLevel;
+        double blackLightLevel, lightLevel;
+
+        // Ensure that the opmode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            moveCounts = (int) (distance * COUNTS_PER_INCH);
+            newLeftTarget = robot.frontLeftMotor.getCurrentPosition() + moveCounts;
+            newRightTarget = robot.frontRightMotor.getCurrentPosition() + moveCounts;
+
+            // Set Target and Turn On RUN_TO_POSITION
+            robot.frontLeftMotor.setTargetPosition(newLeftTarget);
+            robot.frontRightMotor.setTargetPosition(newRightTarget);
+
+            robot.frontLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.frontRightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // start motion.
+            speed = Range.clip(Math.abs(speed), 0.0, 1.0);
+            robot.frontLeftMotor.setPower(speed);
+            robot.frontRightMotor.setPower(speed);
+            robot.backRightMotor.setPower(speed);
+            robot.backLeftMotor.setPower(speed);
+
+            // Enable line light sensor LED
+            robot.lineLightSensor.enableLed(true);
+
+            // assuming the wall tracking starts on black tile.
+            blackLightLevel = robot.lineLightSensor.getLightDetected();
+
+            // keep looping while we are still active, and BOTH motors are running.
+            while (opModeIsActive() &&
+                    (robot.frontLeftMotor.isBusy() && robot.frontRightMotor.isBusy())) {
+
+                // adjust relative speed based on ultrasound reading.
+                ultraSoundLevel = robot.ultrasonicSensor.getUltrasonicLevel();
+                error = ultraSoundLevel - TARGET_WALL_DISTANCE;
+                if (Math.abs(error) > WALL_DISTANCE_THRESHOLD) {
+                    steer = getSteer(error, P_DRIVE_COEFF);
+
+                    // if driving in reverse, the motor correction also needs to be reversed
+                    if (distance < 0)
+                        steer *= -1.0;
+
+                    leftSpeed = speed - steer;
+                    rightSpeed = speed + steer;
+
+                    // Normalize speeds if any one exceeds +/- 1.0;
+                    max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
+                    if (max > 1.0) {
+                        leftSpeed /= max;
+                        rightSpeed /= max;
+                    }
+
+                    robot.frontLeftMotor.setPower(leftSpeed);
+                    robot.frontRightMotor.setPower(rightSpeed);
+                    robot.backLeftMotor.setPower(leftSpeed);
+                    robot.backRightMotor.setPower(rightSpeed);
+                }
+
+                // check light sensor reading. If it reaches the white line then stop robot.
+                lightLevel = robot.lineLightSensor.getLightDetected();
+                if (lightLevel > 3*blackLightLevel)
+                {
+                    // White line detected.
+                    break;
+                }
+
+                // Display drive status for the driver.
+                telemetry.addData("Wall_Dist", "%.2f", ultraSoundLevel);
+                telemetry.update();
+            }
+
+            // Stop all motion;
+            robot.frontLeftMotor.setPower(0);
+            robot.frontRightMotor.setPower(0);
+            robot.backLeftMotor.setPower(0);
+            robot.backRightMotor.setPower(0);
+
+            // Turn off RUN_TO_POSITION
+            robot.frontLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.frontRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
     }
 }

@@ -105,7 +105,8 @@ public class HardwareSigma2016
         pusherL.setPosition(MID_SERVO);
         pusherR.setPosition(MID_SERVO);
 
-        //lineLightSensor = hwMap.lightSensor.get("line_light");
+        // light sensor on the robot bottom
+        lineLightSensor = hwMap.lightSensor.get("line_light");
 
         // color sensor on beacon pusher
         beaconColorSensor = hwMap.colorSensor.get("beacon_color");
