@@ -10,12 +10,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import java.io.FileNotFoundException;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.logging.Logger;
-
-import static org.firstinspires.ftc.robotcontroller.external.samples.HardwarePushbot.MID_SERVO;
 import static org.firstinspires.ftc.teamcode.BlueNearAutoOpSigma2016.fileLogger;
 
 /**
@@ -87,6 +81,13 @@ public class HardwareSigma2016
 
         // color sensor on beacon pusher
         beaconColorSensor = hwMap.colorSensor.get("beacon_color");
+//        beaconColorSensor.enableLed(true);
+//        try {
+//            Thread.sleep(300);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+        beaconColorSensor.enableLed(false);
 
         // ultrasonic sensor
         ultrasonicSensor = hwMap.ultrasonicSensor.get("ultrasonic");

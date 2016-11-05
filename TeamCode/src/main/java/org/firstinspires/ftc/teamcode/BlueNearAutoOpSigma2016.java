@@ -97,21 +97,31 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
     // These constants define the desired driving/control characteristics
     // The can/should be tweaked to suite the specific robot drive train.
-    static final double DRIVE_SPEED = 0.7;     // Nominal speed for better accuracy.
-    static final double TURN_SPEED = 0.5;     // Nominal half speed for better accuracy.
+    static final double DRIVE_SPEED = 0.8;     // Nominal speed for better accuracy.
+    static final double TURN_SPEED = 0.6;     // Nominal half speed for better accuracy.
+    static final double WALL_APPROACHING_SPEED = 0.3;
+    static final double WALL_TRACKING_SPEED = 0.06;
 
     static final double HEADING_THRESHOLD = 3;      // As tight as we can make it with an integer gyro
     static final double P_TURN_COEFF = 0.5;     // Larger is more responsive, but also less stable
     static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
+    static final double P_WALL_TRACKING_COEFF = 0.1;     // Larger is more responsive, but also less stable
 
-    static final int TARGET_WALL_DISTANCE = 10;  // ultrasound sensor reading for x inch away from wall
-    static final int WALL_DISTANCE_THRESHOLD = 1; // no need to adjust if wall distance is within range
+    static final double TARGET_WALL_DISTANCE = 10.0;  // ultrasound sensor reading for x inch away from wall
+    static final double WALL_DISTANCE_THRESHOLD = 1.0; // no need to adjust if wall distance is within range
+    static final double WALL_TRACKING_MAX_HEADING_OFFSET = 3;
+
+    static final double COLOR_COEFF = 0.3;
+
+    static final int RED_TRESHOLD = 50000;
+    static final int BLUE_TRESHOLD = 6000;
 
     // Logging utilities
     public static LoggerSigma2016 fileLogger = null;
 
-    int ct = 0;
-    int ct1=0;
+    int ct2 = 0;
+    int ct1 = 0;
+    int ct3 = 0;
 
     @Override
     public void runOpMode() {
@@ -177,16 +187,19 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
         gyroDrive(DRIVE_SPEED, -18.0, 0.0); // Drive BWD 30 inches
         fileLogger.logLine("1 -- gyro reading=" + gyro.getIntegratedZValue());
 
-        gyroTurn(TURN_SPEED, -60.0);               // Turn  CCW to -45 Degrees
+        gyroTurn(TURN_SPEED, -60.0);               // Turn to -60 Degrees
         fileLogger.logLine("2 -- gyro reading=" + gyro.getIntegratedZValue());
 
         gyroDrive(DRIVE_SPEED, -49, -60.0); // Drive BWD 49 inches
         fileLogger.logLine("3 -- gyro reading=" + gyro.getIntegratedZValue());
 
-        gyroTurn(TURN_SPEED, -10.0);               // Turn  CCW by 35 Degrees
+        gyroTurn(TURN_SPEED, -30.0);               // Turn to -10 degree
         fileLogger.logLine("4 -- gyro reading=" + gyro.getIntegratedZValue());
 
-        UltraSonicReachTheWall(DRIVE_SPEED / 2, -80, -10.0);
+        UltraSonicReachTheWall(WALL_APPROACHING_SPEED, -80, -10.0);
+
+        gyroTurn(TURN_SPEED, 0.0);               // Turn to 0 degree
+        fileLogger.logLine("5 -- gyro reading=" + gyro.getIntegratedZValue());
 
         telemetry.addData("Initial Path", "Complete");
         telemetry.update();
@@ -209,13 +222,25 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
         // Drive forward to align with the wall and park at far line
         // WallTrackingToWhiteLine(0.5, -80, true);
-        WallTrackingToColorBeacon(0.5, -80, true);
-        /*
+        WallTrackingToColorBeacon(WALL_TRACKING_SPEED, -60, 0.0, true);
+
+        // Align up with the beacon lights
+        gyroDrive(DRIVE_SPEED, 1.0, 0.0); // Drive FWD 1 inches
+
         // run the beacon light color detection and button pushing procedure
         ColorDetectionAndButtonPushing();
 
-        // Drive backward to detect the near line
-        WallTrackingToWhiteLine(0.5, -72, true);
+        // Drive forward to detect the near line
+//        WallTrackingToWhiteLine(0.5, -72, true);
+
+        WallTrackingToColorBeacon(WALL_TRACKING_SPEED * 3, 44, 0.0, false);
+        WallTrackingToColorBeacon(WALL_TRACKING_SPEED, 18, 0.0, true);
+        WallTrackingToColorBeacon(WALL_TRACKING_SPEED * 3, 5.0, 0.0, false);
+        WallTrackingToColorBeacon(WALL_TRACKING_SPEED, 10, 0.0, true);
+
+        // Align up with the beacon lights
+        gyroDrive(DRIVE_SPEED, -1.0, 0.0); // Drive BWD 1 inches
+
         // run the beacon light color detection and button pushing procedure
         ColorDetectionAndButtonPushing();
 
@@ -599,16 +624,29 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                 robot.backRightMotor.setPower(rightSpeed);
 
                 ultraSoundLevel = robot.ultrasonicSensor.getUltrasonicLevel();
-                if (ultraSoundLevel <= TARGET_WALL_DISTANCE) {
 
-                    fileLogger.logLine("wall reached -- ulevel="+ultraSoundLevel);
+                // handles abnormal ultrasonic reading
+                if (ultraSoundLevel == 0) {
+                    // stop the robot
+                    robot.frontLeftMotor.setPower(0);
+                    robot.frontRightMotor.setPower(0);
+                    robot.backLeftMotor.setPower(0);
+                    robot.backRightMotor.setPower(0);
+
+                    fileLogger.logLine("abnormal -- ulevel=" + ultraSoundLevel);
+
+                    sleep(100);
+                    idle();
+                } else if (ultraSoundLevel <= TARGET_WALL_DISTANCE) {
+
+                    fileLogger.logLine("wall reached -- ulevel=" + ultraSoundLevel);
                     // reached the wall. stop.
                     break;
                 }
 
-                ct++;
-                if (ct > 1000) {
-                    ct = 0;
+                ct2++;
+                if (ct2 > 1000) {
+                    ct2 = 0;
                     fileLogger.logLine("ultrasound level = " + ultraSoundLevel);
                 }
             }
@@ -790,9 +828,10 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
      * @param speed    Target speed for forward motion.  Should allow for _/- variance for adjusting heading
      * @param distance Distance (in inches) to move from current position.  Negative distance means move backwards.
      */
-    public void WallTrackingToColorBeacon(double speed,
-                                          double distance,
-                                          boolean bBeaconDetection) {
+    public boolean WallTrackingToColorBeacon(double speed,
+                                             double distance,
+                                             double headingAngle,
+                                             boolean bBeaconDetection) {
 
         int newLeftTarget;
         int newRightTarget;
@@ -802,8 +841,12 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
         double steer = 0;
         double leftSpeed;
         double rightSpeed;
-        double ultraSoundLevel;
+        double ultraSoundLevel, angleOffset;
         int red, green, blue;
+        int passRedCounter = 0, passBlueCounter = 0;
+        int redMax = 0, blueMax = 0;
+        int redCheck = 0, blueCheck = 0;
+        int lightPassed = 0;
 
         // Ensure that the opmode is still active
         if (opModeIsActive()) {
@@ -844,6 +887,8 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                 } else {
                     robot.backRightMotor.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
+
+                lightPassed = 1;
             }
 
             // start motion.
@@ -853,9 +898,6 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
             robot.backRightMotor.setPower(speed);
             robot.backLeftMotor.setPower(speed);
 
-            // Enable line light sensor LED
-            robot.beaconColorSensor.enableLed(true);
-
             // keep looping while we are still active, and BOTH motors are running.
             while (opModeIsActive() &&
                     (robot.frontLeftMotor.isBusy() && robot.frontRightMotor.isBusy())) {
@@ -863,12 +905,20 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                 // adjust relative speed based on ultrasound reading.
                 ultraSoundLevel = robot.ultrasonicSensor.getUltrasonicLevel();
                 error = ultraSoundLevel - TARGET_WALL_DISTANCE;
-                if (Math.abs(error) > WALL_DISTANCE_THRESHOLD) {
-                    steer = getSteer(error, P_DRIVE_COEFF);
 
-                    // if driving in reverse, the motor correction also needs to be reversed
-                    if (distance < 0)
-                        steer *= -1.0;
+                angleOffset = gyro.getIntegratedZValue() - headingAngle;
+
+                ct3++;
+                if (ct3 > 1000) {
+                    ct3 = 0;
+
+                    fileLogger.logLine("ultrasoniclevel=" + ultraSoundLevel + " error=" + error + " angleOffset=" + angleOffset);
+                }
+
+                if ((Math.abs(error) >= WALL_DISTANCE_THRESHOLD) &&
+                        ((Math.abs(angleOffset) < WALL_TRACKING_MAX_HEADING_OFFSET) || (error * angleOffset * distance < 0))) {
+
+                    steer = getSteer(error, P_WALL_TRACKING_COEFF);
 
                     leftSpeed = speed - steer;
                     rightSpeed = speed + steer;
@@ -884,6 +934,17 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                     robot.frontRightMotor.setPower(rightSpeed);
                     robot.backLeftMotor.setPower(leftSpeed);
                     robot.backRightMotor.setPower(rightSpeed);
+
+                    if (ct3 == 0) {
+                        fileLogger.logLine("error=" + error
+                                + " leftspeed=" + String.format(Double.toString(leftSpeed), "%5.2f")
+                                + " rightSpeed=" + String.format(Double.toString(rightSpeed), "%5.2f"));
+                    }
+                } else {
+                    robot.frontLeftMotor.setPower(speed);
+                    robot.frontRightMotor.setPower(speed);
+                    robot.backRightMotor.setPower(speed);
+                    robot.backLeftMotor.setPower(speed);
                 }
 
                 if (bBeaconDetection) {
@@ -893,46 +954,116 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                     green = robot.beaconColorSensor.green();
                     blue = robot.beaconColorSensor.blue();
 
+                    // any 0 reading might means out of range
+                    if (red * green * blue == 0) {
+                        continue;
+                    }
+
+//                    if (ct1 == 0)
+//                    {
+//                        fileLogger.logLine("red=" + red + " green=" + green + " blue=" + blue);
+//                    }
+//                    ct1++;
+//                    if (ct1 > 500) {
+//                        ct1 = 0;
+//                    }
+
+                    redCheck += ((red - green) * (red - blue) - redCheck) * COLOR_COEFF;
+                    if (redCheck > redMax) {
+
+                        redMax = redCheck;
+                        passRedCounter = 0;
+                    } else {
+                        passRedCounter++;
+                    }
+
+                    blueCheck += ((blue - red) * (blue - green) - blueCheck) * COLOR_COEFF;
+                    if (blueCheck > blueMax) {
+
+                        blueMax = blueCheck;
+                        passBlueCounter = 0;
+                    } else {
+                        passBlueCounter++;
+                    }
+
+                    if ((redMax > RED_TRESHOLD)
+                            && (passRedCounter > 200)) {
+                        // Red beacon reached
+                        fileLogger.logLine("--- red light! redMax=" + redMax);
+
+                        lightPassed++;
+                        if (lightPassed > 1) {
+                            blueMax = 0;
+
+                            // Stop all motion;
+                            robot.frontLeftMotor.setPower(0);
+                            robot.frontRightMotor.setPower(0);
+                            robot.backLeftMotor.setPower(0);
+                            robot.backRightMotor.setPower(0);
+
+//                        // We are blue team
+//                        robot.pusherR.setPosition(PUSHER_R_OUT);
+//
+//                        //wait servo to finish
+//                        sleep(500);
+//
+//                        // Retrieve the pusher
+//                        robot.pusherR.setPosition(PUSHER_R_IN);
+//
+//                        //wait servo to finish
+//                        sleep(500);
+
+//                        fileLogger.logLine("pushed blue button on the right!");
+                            break;
+                        }
+                    }
+
+                    if ((blueMax > BLUE_TRESHOLD)
+                            && (passBlueCounter > 200)) {
+                        // Blue beacon reached
+                        fileLogger.logLine("--- blue lght! blueMax=" + blueMax);
+
+                        lightPassed++;
+                        if (lightPassed > 1) {
+                            redMax = 0;
+
+                            // Stop all motion;
+                            robot.frontLeftMotor.setPower(0);
+                            robot.frontRightMotor.setPower(0);
+                            robot.backLeftMotor.setPower(0);
+                            robot.backRightMotor.setPower(0);
+
+                            // We are the blue team
+//                        robot.pusherL.setPosition(PUSHER_L_OUT);
+//
+//                        //wait servo to finish
+//                        sleep(500);
+//
+//                        // Retrieve the pusher
+//                        robot.pusherL.setPosition(PUSHER_L_IN);
+//
+//                        //wait servo to finish
+//                        sleep(500);
+
+//                        fileLogger.logLine("pushed blue button on the left!");
+
+                            break;
+                        }
+                    }
+
+                    if (ct1 == 0) {
+                        fileLogger.logLine("redMax=" + redMax + " blueMax=" + blueMax);
+                        fileLogger.logLine("RGB= " + red + " " + green + " " + blue);
+                    }
                     ct1++;
-                    if (ct1 > 300) {
+                    if (ct1 > 500) {
                         ct1 = 0;
-                        fileLogger.logLine("red=" + red + " green=" + green + " blue=" + blue);
                     }
 
-                    // red color detected
-                    if ((red > 50) && (green < 20) && (blue < 20)) {
-
-                        // We are blue team
-                        robot.pusherL.setPosition(PUSHER_L_OUT);
-
-                        //wait servo to finish
-                        sleep(500);
-
-                        // Retrieve the pusher
-                        robot.pusherL.setPosition(PUSHER_L_IN);
-
-                        break;
-                    }
-
-                    // blue color detected
-                    if ((red < 20) && (green < 20) && (blue > 50)) {
-
-                        // We are the blue team
-                        robot.pusherR.setPosition(PUSHER_R_OUT);
-
-                        //wait servo to finish
-                        sleep(500);
-
-                        // Retrieve the pusher
-                        robot.pusherR.setPosition(PUSHER_R_IN);
-
-                        break;
-                    }
+                    // Display drive status for the driver.
+                    telemetry.addData("RGB=", "%d %d %d", red, green, blue);
+                    telemetry.update();
                 }
-
-                // Display drive status for the driver.
-                telemetry.addData("Wall_Dist", "%.2f", ultraSoundLevel);
-                telemetry.update();
             }
 
             // Stop all motion;
@@ -957,20 +1088,48 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                     robot.backRightMotor.setDirection(DcMotorSimple.Direction.FORWARD);
                 }
             }
+
+            // check color again to see if robot is off position
+//            red = robot.beaconColorSensor.red();
+//            green = robot.beaconColorSensor.green();
+//            blue = robot.beaconColorSensor.blue();
+//
+//            if (redMax == 0) {
+//                fileLogger.logLine("RGB= " + red + " " + green + " " + blue);
+//                fileLogger.logLine("(blue-red)*(blue-green)/blueMax=" + (blue - red) * (blue - green) / (double) blueMax);
+//                // blue light detected
+//                if ((blue - red) * (blue - green) / (double) blueMax < 0.85) {
+//                    // overshoot the light
+//                    return (true);
+//                }
+//            }
+//
+//            if (blueMax == 0) {
+//                fileLogger.logLine("RGB= " + red + " " + green + " " + blue);
+//                fileLogger.logLine("(red-blue)*(red-green)/redMax=" + (red - blue) * (red - green) / (double) redMax);
+//                // red light detected
+//                if ((red - blue) * (red - green) / (double) redMax < 0.85) {
+//                    // overshoot the light
+//                    return (true);
+//                }
+//            }
         }
+
+        return (false);
     }
 
     public void ColorDetectionAndButtonPushing() {
 
         ElapsedTime holdTimer = new ElapsedTime();
-        double holdTime = 100; //ten second time out
+        double holdTime = 2;  // 2 second timeout
+        int red, green, blue;
+        int redCheck = 0, blueCheck = 0;
 
-        robot.beaconColorSensor.enableLed(true); //led OFF
+        robot.beaconColorSensor.enableLed(false); //led OFF
 
         // keep looping while we have time remaining.
         holdTimer.reset();
         while (holdTimer.time() < holdTime) {
-            int red, green, blue;
 
             red = robot.beaconColorSensor.red();
             green = robot.beaconColorSensor.green();
@@ -978,38 +1137,49 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
             telemetry.addData("ColorRGB:: ", "%d %d %d", red, green, blue);
             telemetry.update();
-            fileLogger.logLine("Alpha " + robot.beaconColorSensor.alpha());
-            fileLogger.logLine("Red " + robot.beaconColorSensor.red());
-            fileLogger.logLine("Blue " + robot.beaconColorSensor.blue());
-            fileLogger.logLine("Green " + robot.beaconColorSensor.green());
+//            fileLogger.logLine("Alpha " + robot.beaconColorSensor.alpha());
+//            fileLogger.logLine("Red " + robot.beaconColorSensor.red());
+//            fileLogger.logLine("Blue " + robot.beaconColorSensor.blue());
+//            fileLogger.logLine("Green " + robot.beaconColorSensor.green());
+
+            redCheck = (red - blue) * (red - green);
+            blueCheck = (blue - red) * (blue - green);
 
             // red color detected
-            if ((red > 50) && (green < 20) && (blue < 20)) {
+            if (redCheck > RED_TRESHOLD) {
 
                 // We are blue team
-                robot.pusherL.setPosition(1.0);
+                robot.pusherR.setPosition(PUSHER_R_OUT);
+
+                //wait servo to finish
+                sleep(1000);
+
+                // Retrieve the pusher
+                robot.pusherR.setPosition(PUSHER_R_IN);
 
                 //wait servo to finish
                 sleep(500);
 
-                // Retrieve the pusher
-                robot.pusherL.setPosition(0.0);
-
+                fileLogger.logLine("--- red light detected and blue button pushed. redCheck=" + redCheck);
                 break;
             }
 
             // blue color detected
-            if ((red < 20) && (green < 20) && (blue > 50)) {
+            if (blueCheck > BLUE_TRESHOLD) {
 
                 // We are the blue team
-                robot.pusherR.setPosition(1.0);
+                robot.pusherL.setPosition(PUSHER_L_OUT);
+
+                //wait servo to finish
+                sleep(1000);
+
+                // Retrieve the pusher
+                robot.pusherL.setPosition(PUSHER_L_IN);
 
                 //wait servo to finish
                 sleep(500);
 
-                // Retrieve the pusher
-                robot.pusherR.setPosition(0.0);
-
+                fileLogger.logLine("--- blue light detected and blue button pushed. blueCheck=" + blueCheck);
                 break;
             }
 
@@ -1017,5 +1187,4 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
             idle();
         }
     }
-
 }
