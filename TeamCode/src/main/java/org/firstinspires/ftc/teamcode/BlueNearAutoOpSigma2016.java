@@ -102,6 +102,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
     static final double TURN_SPEED = 0.6;     // Nominal half speed for better accuracy.
     static final double WALL_APPROACHING_SPEED = 0.3;
     static final double WALL_TRACKING_SPEED = 0.06;
+    static final double WALL_TRAVELING_SPEED = 0.09;
 
     static final double HEADING_THRESHOLD = 2;      // As tight as we can make it with an integer gyro
     static final double P_TURN_COEFF = 0.5;     // Larger is more responsive, but also less stable
@@ -114,8 +115,8 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
     static final double COLOR_COEFF = 0.3;
 
-    static final int RED_TRESHOLD = 2500;
-    static final int BLUE_TRESHOLD = 10000;
+    static final int RED_TRESHOLD = 5;
+    static final int BLUE_TRESHOLD = 5;
     static final int WHITE_LINE_THRESHOLD = 400;
 
     // Logging utilities
@@ -239,7 +240,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 //        WallTrackingToColorBeacon(WALL_TRACKING_SPEED * 3, 53, 0.0, false);
 //        WallTrackingToColorBeacon(WALL_TRACKING_SPEED, -18, 0.0, true);
 
-        WallTrackingToWhiteLine(WALL_APPROACHING_SPEED, 45.0, 0, false);
+        WallTrackingToWhiteLine(WALL_TRAVELING_SPEED, 45.0, 0, false);
         WallTrackingToWhiteLine(WALL_TRACKING_SPEED, 36.0, 0, true);
 
         // Align up with the beacon lights
@@ -249,19 +250,15 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
         ColorDetectionAndButtonPushing();
 
         /*------ drive back to the vortex ------*/
-        /*
-        // Drive forward to align with the wall, no white line detection
-        WallTrackingToWhiteLine(0.8, 72, false);
 
-        gyroDrive(DRIVE_SPEED, 15.00, -45.0); // Drive BWD 50 inches heading -45 degree
+        gyroDrive(DRIVE_SPEED, -36.00, 90.0); // 90 degree
         fileLogger.logLine("5 -- gyro reading=" + gyro.getIntegratedZValue());
 
-        gyroTurn(TURN_SPEED, 90.0);         // Turn  CCW to -45 Degrees
-        fileLogger.logLine("6 -- gyro reading=" + gyro.getIntegratedZValue());
+//        gyroTurn(TURN_SPEED, 90.0);         // Turn  CCW to -45 Degrees
+//        fileLogger.logLine("6 -- gyro reading=" + gyro.getIntegratedZValue());
 
-        gyroDrive(DRIVE_SPEED, 15.00, -155.0); // Drive BWD 30 inches heading 45 degree
+        gyroDrive(DRIVE_SPEED, -36.00, 135); // 135 degree
         fileLogger.logLine("7 -- gyro reading=" + gyro.getIntegratedZValue());
-*/
 
         // All work are finished. Close the log file.
         fileLogger.close();
@@ -779,6 +776,9 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
                     steer = getSteer(error, P_WALL_TRACKING_COEFF);
 
+                    // normalize steer based on wall tracking speed
+                    steer = steer * speed / WALL_TRACKING_SPEED;
+
                     leftSpeed = speed - steer;
                     rightSpeed = speed + steer;
 
@@ -800,10 +800,37 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                                 + " rightSpeed=" + String.format(Double.toString(rightSpeed), "%5.2f"));
                     }
                 } else {
-                    robot.frontLeftMotor.setPower(speed);
-                    robot.frontRightMotor.setPower(speed);
-                    robot.backRightMotor.setPower(speed);
-                    robot.backLeftMotor.setPower(speed);
+
+                    if (angleOffset != 0) {
+                        steer = getSteer(angleOffset, P_WALL_TRACKING_COEFF);
+
+                        // normalize steer based on wall tracking speed
+                        steer = steer * speed / WALL_TRACKING_SPEED;
+
+                        // if driving in forward, the motor correction also needs to be reversed
+                        if (distance > 0)
+                            steer *= -1.0;
+
+                        leftSpeed = speed - steer;
+                        rightSpeed = speed + steer;
+
+                        // Normalize speeds if any one exceeds +/- 1.0;
+                        max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
+                        if (max > 1.0) {
+                            leftSpeed /= max;
+                            rightSpeed /= max;
+                        }
+
+                        robot.frontLeftMotor.setPower(leftSpeed);
+                        robot.frontRightMotor.setPower(rightSpeed);
+                        robot.backLeftMotor.setPower(leftSpeed);
+                        robot.backRightMotor.setPower(rightSpeed);
+                    } else {
+                        robot.frontLeftMotor.setPower(speed);
+                        robot.frontRightMotor.setPower(speed);
+                        robot.backRightMotor.setPower(speed);
+                        robot.backLeftMotor.setPower(speed);
+                    }
                 }
 
                 if (bLineDetection) {
@@ -1168,17 +1195,26 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
             blue = robot.beaconColorSensor.blue();
 
             telemetry.addData("ColorRGB:: ", "%d %d %d", red, green, blue);
-//            telemetry.update();
-//           fileLogger.logLine("Alpha " + robot.beaconColorSensor.alpha());
-//            fileLogger.logLine("Red " + robot.beaconColorSensor.red());
-//            fileLogger.logLine("Blue " + robot.beaconColorSensor.blue());
-//            fileLogger.logLine("Green " + robot.beaconColorSensor.green());
+            telemetry.update();
+//            fileLogger.logLine("Alpha " + robot.beaconColorSensor.alpha());
+            fileLogger.logLine("Red " + robot.beaconColorSensor.re
+                    d());
+            fileLogger.logLine("Blue " + robot.beaconColorSensor.blue());
+            fileLogger.logLine("Green " + robot.beaconColorSensor.green());
 
-            redCheck = (red - blue) * (red - green);
-            blueCheck = (blue - red) * (blue - green);
+            if ((red > blue) && (red > green)) {
+                redCheck ++;
+            } else {
+                redCheck = 0;
+            }
+
+            if ((blue > red) && (blue > green)) {
+                blueCheck ++;
+            } else {
+                blueCheck = 0;
+            }
 
             telemetry.addData("ColorRC&BC :: ", "%d %d", redCheck, blueCheck);
-
             telemetry.update();
 
             // red color detected
@@ -1186,19 +1222,17 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
                 // We are blue team
                 robot.pusherR.setPosition(PUSHER_R_OUT);
-
                 //wait servo to finish
                 sleep(1300);
 
                 // Retrieve the pusher
                 robot.pusherR.setPosition(PUSHER_R_IN);
-
                 //wait servo to finish
-                sleep(500);
+                sleep(1300);
 
                 robot.pusherR.setPosition(PUSHER_STOP);
 
-                fileLogger.logLine("--- red light detected and blue button pushed. redCheck=" + redCheck);
+                fileLogger.logLine("--- red light detected and blue button pushed. redCheck=" + redCheck + " blueCheck=" + blueCheck);
                 break;
             }
 
@@ -1207,17 +1241,16 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
                 // We are the blue team
                 robot.pusherL.setPosition(PUSHER_L_OUT);
-
                 //wait servo to finish
                 sleep(1300);
 
                 // Retrieve the pusher
                 robot.pusherL.setPosition(PUSHER_L_IN);
                 //wait servo to finish
-                sleep(500);
+                sleep(1300);
                 robot.pusherL.setPosition(PUSHER_STOP);
 
-                fileLogger.logLine("--- blue light detected and blue button pushed. blueCheck=" + blueCheck);
+                fileLogger.logLine("--- blue light detected and blue button pushed. blueCheck=" + blueCheck + " redCheck=" + redCheck);
                 break;
             }
 

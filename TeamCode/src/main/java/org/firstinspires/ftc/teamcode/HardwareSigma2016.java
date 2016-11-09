@@ -79,7 +79,7 @@ public class HardwareSigma2016
         pusherR = hwMap.servo.get("pusher_r");
         pusherL.setPosition(PUSHER_L_IN);
         pusherR.setPosition(PUSHER_R_IN);
-        Thread.sleep(300);
+        Thread.sleep(1300);
         pusherL.setPosition(PUSHER_STOP);
         pusherR.setPosition(PUSHER_STOP);
 
