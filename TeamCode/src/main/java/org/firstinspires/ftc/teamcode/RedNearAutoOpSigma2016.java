@@ -82,9 +82,9 @@ import static org.firstinspires.ftc.teamcode.HardwareSigma2016.PUSHER_STOP;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name = "Blue Near Auto Op Sigma 2016", group = "Sigma6710")
+@Autonomous(name = "Red Near Auto Op Sigma 2016", group = "Sigma6710")
 //@Disabled
-public class BlueNearAutoOpSigma2016 extends LinearOpMode {
+public class RedNearAutoOpSigma2016 extends LinearOpMode {
 
     /* Declare OpMode members. */
     HardwareSigma2016 robot = null;
@@ -125,6 +125,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
     int ct2 = 0;
     int ct1 = 0;
     int ct3 = 0;
+
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -188,19 +189,19 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
         // Put a hold after each turn
         fileLogger.logLine("0 -- gyro reading=" + gyro.getIntegratedZValue());
 
-        gyroDrive(DRIVE_SPEED, -18.0, 0.0); // Drive BWD 30 inches
+        gyroDrive(DRIVE_SPEED, 18.0, 0.0); // Drive BWD 30 inches
         fileLogger.logLine("1 -- gyro reading=" + gyro.getIntegratedZValue());
 
-        gyroTurn(TURN_SPEED, -60.0);               // Turn to -60 Degrees
+        gyroTurn(TURN_SPEED, 60.0);               // Turn to -60 Degrees
         fileLogger.logLine("2 -- gyro reading=" + gyro.getIntegratedZValue());
 
-        gyroDrive(DRIVE_SPEED, -48, -60.0); // Drive BWD 49 inches
+        gyroDrive(DRIVE_SPEED, 47, 60.0); // Drive BWD 49 inches
         fileLogger.logLine("3 -- gyro reading=" + gyro.getIntegratedZValue());
 
-        gyroTurn(TURN_SPEED, -30.0);               // Turn to -10 degree
+        gyroTurn(TURN_SPEED, 30.0);               // Turn to -10 degree
         fileLogger.logLine("4 -- gyro reading=" + gyro.getIntegratedZValue());
 
-        UltraSonicReachTheWall(WALL_APPROACHING_SPEED, -80, -10.0);
+        UltraSonicReachTheWall(WALL_APPROACHING_SPEED, 80, 10.0);
 
         gyroTurn(TURN_SPEED, 0.0);               // Turn to 0 degree
         fileLogger.logLine("5 -- gyro reading=" + gyro.getIntegratedZValue());
@@ -225,7 +226,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 //        }
 
         // Drive forward to align with the wall and park at far line
-        WallTrackingToWhiteLine(WALL_TRACKING_SPEED, -80, 0, true);
+        WallTrackingToWhiteLine(WALL_TRACKING_SPEED, 80, 0, true);
 //        WallTrackingToColorBeacon(WALL_TRACKING_SPEED, -60, 0.0, true);
 
 //        // Align up with the beacon lights
@@ -240,8 +241,8 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 //        WallTrackingToColorBeacon(WALL_TRACKING_SPEED * 3, 53, 0.0, false);
 //        WallTrackingToColorBeacon(WALL_TRACKING_SPEED, -18, 0.0, true);
 
-        WallTrackingToWhiteLine(WALL_TRAVELING_SPEED, 45.0, 0, false);
-        WallTrackingToWhiteLine(WALL_TRACKING_SPEED, 36.0, 0, true);
+        WallTrackingToWhiteLine(WALL_TRAVELING_SPEED, -45.0, 0, false);
+        WallTrackingToWhiteLine(WALL_TRACKING_SPEED, -36.0, 0, true);
 
         // Align up with the beacon lights
 //        gyroDrive(DRIVE_SPEED, 1.0, 0.0); // Drive BWD 1 inches
@@ -251,13 +252,13 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
         /*------ drive back to the vortex ------*/
 
-        gyroDrive(DRIVE_SPEED, -36.00, 90.0); // 90 degree
+        gyroDrive(DRIVE_SPEED, 36.00, -90.0); // Drive BWD 50 inches heading -45 degree
         fileLogger.logLine("5 -- gyro reading=" + gyro.getIntegratedZValue());
 
-//        gyroTurn(TURN_SPEED, 90.0);         // Turn  CCW to -45 Degrees
-//        fileLogger.logLine("6 -- gyro reading=" + gyro.getIntegratedZValue());
+ //       gyroTurn(TURN_SPEED, 90.0);         // Turn  CCW to -45 Degrees
+ //       fileLogger.logLine("6 -- gyro reading=" + gyro.getIntegratedZValue());
 
-        gyroDrive(DRIVE_SPEED, -36.00, 115); // 135 degree
+        gyroDrive(DRIVE_SPEED, 40.00, -115.0); // Drive BWD 30 inches heading 45 degree
         fileLogger.logLine("7 -- gyro reading=" + gyro.getIntegratedZValue());
 
         // All work are finished. Close the log file.
@@ -1219,26 +1220,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
             // red color detected
             if (redCheck > RED_TRESHOLD) {
 
-                // We are blue team
-                robot.pusherR.setPosition(PUSHER_R_OUT);
-                //wait servo to finish
-                sleep(1300);
-
-                // Retrieve the pusher
-                robot.pusherR.setPosition(PUSHER_R_IN);
-                //wait servo to finish
-                sleep(1300);
-
-                robot.pusherR.setPosition(PUSHER_STOP);
-
-                fileLogger.logLine("--- red light detected and blue button pushed. redCheck=" + redCheck + " blueCheck=" + blueCheck);
-                break;
-            }
-
-            // blue color detected
-            if (blueCheck > BLUE_TRESHOLD) {
-
-                // We are the blue team
+                // We are red team
                 robot.pusherL.setPosition(PUSHER_L_OUT);
                 //wait servo to finish
                 sleep(1300);
@@ -1247,9 +1229,28 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                 robot.pusherL.setPosition(PUSHER_L_IN);
                 //wait servo to finish
                 sleep(1300);
+
                 robot.pusherL.setPosition(PUSHER_STOP);
 
-                fileLogger.logLine("--- blue light detected and blue button pushed. blueCheck=" + blueCheck + " redCheck=" + redCheck);
+                fileLogger.logLine("--- red light detected and red button pushed. redCheck=" + redCheck + " blueCheck=" + blueCheck);
+                break;
+            }
+
+            // blue color detected
+            if (blueCheck > BLUE_TRESHOLD) {
+
+                // We are the blue team
+                robot.pusherR.setPosition(PUSHER_R_OUT);
+                //wait servo to finish
+                sleep(1300);
+
+                // Retrieve the pusher
+                robot.pusherR.setPosition(PUSHER_R_IN);
+                //wait servo to finish
+                sleep(1300);
+                robot.pusherR.setPosition(PUSHER_STOP);
+
+                fileLogger.logLine("--- blue light detected and red button pushed. blueCheck=" + blueCheck + " redCheck=" + redCheck);
                 break;
             }
 

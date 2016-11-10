@@ -83,9 +83,9 @@ public class HardwareSigma2016
         pusherL.setPosition(PUSHER_STOP);
         pusherR.setPosition(PUSHER_STOP);
 
-
         // light sensor on the robot bottom
         lineLightSensor = hwMap.colorSensor.get("line_light");
+
         lineLightSensor.enableLed(true);
         try {
             Thread.sleep(1000);
@@ -94,8 +94,9 @@ public class HardwareSigma2016
         }
         groundbrightness = lineLightSensor.red() + lineLightSensor.green() + lineLightSensor.blue();
 
-                // color sensor on beacon pusher
+        // color sensor on beacon pusher
         beaconColorSensor = hwMap.colorSensor.get("beacon_color");
+
 //        beaconColorSensor.enableLed(true);
 //        try {
 //            Thread.sleep(300);
@@ -106,8 +107,6 @@ public class HardwareSigma2016
 
         // ultrasonic sensor
         ultrasonicSensor = hwMap.ultrasonicSensor.get("ultrasonic");
-
-        fileLogger.logLine("Hardware is initialized.");
     }
 
     /***
