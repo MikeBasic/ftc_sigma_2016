@@ -4,14 +4,10 @@ import android.graphics.Color;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.LightSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import static org.firstinspires.ftc.teamcode.BlueNearAutoOpSigma2016.fileLogger;
 
 /**
  * This is NOT an opmode.
@@ -30,7 +26,7 @@ public class HardwareSigma2016
     /* Public OpMode members. */
     public DcMotor  backLeftMotor = null;
     public DcMotor  backRightMotor = null;
-    public DcMotor frontLeftMotor = null;
+    public DcMotor  frontLeftMotor = null;
     public DcMotor  frontRightMotor = null;
     public Servo    pusherL    = null;
     public Servo    pusherR   = null;
@@ -96,13 +92,6 @@ public class HardwareSigma2016
 
         // color sensor on beacon pusher
         beaconColorSensor = hwMap.colorSensor.get("beacon_color");
-
-//        beaconColorSensor.enableLed(true);
-//        try {
-//            Thread.sleep(300);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
         beaconColorSensor.enableLed(false);
 
         // ultrasonic sensor
