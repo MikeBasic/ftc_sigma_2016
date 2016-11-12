@@ -101,7 +101,7 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
     static final double TURN_SPEED = 0.6;     // Nominal half speed for better accuracy.
     static final double WALL_APPROACHING_SPEED = 0.3;
     static final double WALL_TRACKING_SPEED = 0.06;
-    static final double WALL_TRAVELING_SPEED = 0.09;
+    static final double WALL_TRAVELING_SPEED = 0.1;
 
     static final double HEADING_THRESHOLD = 2;      // As tight as we can make it with an integer gyro
     static final double P_TURN_COEFF = 0.5;     // Larger is more responsive, but also less stable
@@ -112,11 +112,8 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
     static final double WALL_DISTANCE_THRESHOLD = 1.0; // no need to adjust if wall distance is within range
     static final double WALL_TRACKING_MAX_HEADING_OFFSET = 3;
 
-    static final double COLOR_COEFF = 0.3;
-
     static final int RED_TRESHOLD = 5;
     static final int BLUE_TRESHOLD = 5;
-    static final int WHITE_LINE_THRESHOLD = 400;
 
     int ct2 = 0;
     int ct1 = 0;
@@ -174,7 +171,7 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
         // Put a hold after each turn
         gyroDrive(DRIVE_SPEED, 18.0, 0.0); // Drive BWD 30 inches
 
-        gyroTurn(TURN_SPEED, 60.0);               // Turn to -60 Degrees
+        gyroTurn(TURN_SPEED, 55.0);               // Turn to -60 Degrees
 
         gyroDrive(DRIVE_SPEED, 47, 60.0); // Drive BWD 49 inches
 
@@ -856,7 +853,7 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
                 redCheck = 0;
             }
 
-            if ((blue > red+5) && (blue > green+5)) {
+            if ((blue > red+10) && (blue > green+10)) {
                 blueCheck ++;
             } else {
                 blueCheck = 0;

@@ -96,6 +96,8 @@ public class HardwareSigma2016
 
         // ultrasonic sensor
         ultrasonicSensor = hwMap.ultrasonicSensor.get("ultrasonic");
+
+        System.out.println("--------------- Sigma2016, hardware is initialized!");
     }
 
     /***
