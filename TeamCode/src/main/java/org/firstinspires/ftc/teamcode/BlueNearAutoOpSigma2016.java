@@ -847,7 +847,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
             System.out.println("--BlueNear log-- R:G:B = " + red + ":" + green + ":" + blue);
 
-            if ((red > blue + 20) && (red > green + 20)){
+            if ((red > blue + 10) && (red > green + 10)){
                 redCheck++;
             }
             else {
@@ -855,7 +855,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
             }
 
 
-            if ((blue > red + 10) && (blue > green + 10)) {
+            if ((blue > red + 3) && (blue > green + 3)) {
                 blueCheck++;
             } else {
                 blueCheck = 0;
