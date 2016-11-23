@@ -22,7 +22,13 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class HardwareSigma2016
 {
-    public int groundbrightness;
+    public int groundbrightness_center=0;
+    public int groundbrightness_front=0;
+    public int groundbrightness_back=0;
+    public final double FRONT_LIGHT_THRESH = 2.0;
+    public final double BACK_LIGHT_THRESH = 2.0;
+    public final double CENTER_LIGHT_THRESH = 2.5;
+
     /* Public OpMode members. */
     public DcMotor  backLeftMotor = null;
     public DcMotor  backRightMotor = null;
@@ -31,8 +37,11 @@ public class HardwareSigma2016
     public Servo    pusherL    = null;
     public Servo    pusherR   = null;
     public ColorSensor lineLightSensor = null;
+    public ColorSensor front_light = null;
+    public ColorSensor back_light = null;
     public ColorSensor beaconColorSensor = null;
-    public UltrasonicSensor ultrasonicSensor = null;
+    public UltrasonicSensor ultra_front = null;
+    public UltrasonicSensor ultra_back = null;
 
     public static final double PUSHER_L_IN  =  1.0 ;
     public static final double PUSHER_R_IN  =  0.0 ;
@@ -88,14 +97,23 @@ public class HardwareSigma2016
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        groundbrightness = lineLightSensor.red() + lineLightSensor.green() + lineLightSensor.blue();
+        groundbrightness_center = lineLightSensor.red() + lineLightSensor.green() + lineLightSensor.blue();
 
         // color sensor on beacon pusher
         beaconColorSensor = hwMap.colorSensor.get("beacon_color");
         beaconColorSensor.enableLed(false);
 
+        front_light = hwMap.colorSensor.get("front_light");
+        front_light.enableLed(true);
+        groundbrightness_front = front_light.red() + front_light.green() + front_light.blue();
+
+        back_light = hwMap.colorSensor.get("back_light");
+        back_light.enableLed(true);
+        groundbrightness_back = back_light.red() + back_light.green() + back_light.blue();
+
         // ultrasonic sensor
-        ultrasonicSensor = hwMap.ultrasonicSensor.get("ultrasonic");
+        ultra_back = hwMap.ultrasonicSensor.get("ultra_back");
+        ultra_front = hwMap.ultrasonicSensor.get("ultra_front");
 
         System.out.println("--------------- Sigma2016, hardware is initialized!");
     }
