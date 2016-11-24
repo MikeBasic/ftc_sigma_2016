@@ -34,6 +34,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.UltrasonicSensor;
 
 /*
@@ -56,6 +57,8 @@ public class SensorTestSigma2016 extends LinearOpMode {
     ColorSensor front_light = null;
     ColorSensor back_light = null;
 
+    DcMotor frontLeftMotor = null;
+
     UltrasonicSensor ultra_front = null;
     UltrasonicSensor ultra_back = null;
 
@@ -63,10 +66,13 @@ public class SensorTestSigma2016 extends LinearOpMode {
     @Override
     public void runOpMode() {
 
+
         // get a reference to our ColorSensor object.
         beacon_color = hardwareMap.colorSensor.get("beacon_color");
         // turn the LED on in the beginning, just so user will know that the sensor is active.
         beacon_color.enableLed(false);
+
+        frontLeftMotor = hardwareMap.dcMotor.get("motor_2");
 
         front_light = hardwareMap.colorSensor.get("front_light");
         front_light.enableLed(true);
@@ -84,6 +90,12 @@ public class SensorTestSigma2016 extends LinearOpMode {
         // wait for the start button to be pressed.
         waitForStart();
 
+//        frontLeftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        frontLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        frontLeftMotor.setTargetPosition(1125);  // one whole turn
+//        frontLeftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        frontLeftMotor.setPower(0.1);
+
         // loop and read the RGB data.
         // Note we use opModeIsActive() as our loop condition because it is an interruptible method.
         while (opModeIsActive()) {
@@ -92,8 +104,8 @@ public class SensorTestSigma2016 extends LinearOpMode {
             telemetry.addData("front: ", "%d", front_light.red() + front_light.green() + front_light.blue());
             telemetry.addData("back: ", "%d", back_light.red() + back_light.green() + back_light.blue());
             telemetry.addData("middle: ", "%d", lineLightSensor.red() + lineLightSensor.green() + lineLightSensor.blue());
-            telemetry.addData("u_front: ", "%d", ultra_front.getUltrasonicLevel());
-            telemetry.addData("u_back: ", "%d", ultra_back.getUltrasonicLevel());
+            telemetry.addData("u_front: ", "%f", ultra_front.getUltrasonicLevel());
+            telemetry.addData("u_back: ", "%f", ultra_back.getUltrasonicLevel());
 
             telemetry.update();
         }
