@@ -113,7 +113,9 @@ public class HardwareSigma2016
 
         // ultrasonic sensor
         ultra_back = hwMap.ultrasonicSensor.get("ultra_back");
+        ultra_back.getUltrasonicLevel();  // make ultrasonic sensor ready and give stable output when needed.
         ultra_front = hwMap.ultrasonicSensor.get("ultra_front");
+        ultra_front.getUltrasonicLevel(); // make ultrasonic sensor ready and give stable output when needed.
 
         System.out.println("--------------- Sigma2016, hardware is initialized!");
     }

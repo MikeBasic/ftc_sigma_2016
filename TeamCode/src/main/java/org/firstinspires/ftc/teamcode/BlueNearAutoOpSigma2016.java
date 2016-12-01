@@ -104,7 +104,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
     static final double P_WALL_TRACKING_COEFF = 0.1;     // Larger is more responsive, but also less stable
     static final double TARGET_WALL_DISTANCE = 13.0;  // ultrasound sensor reading for x inch away from wall
     static final double WALL_DISTANCE_THRESHOLD = 1.0; // no need to adjust if wall distance is within range
-    static final double WALL_TRACKING_MAX_HEADING_OFFSET = 6.0;
+    static final double WALL_TRACKING_MAX_HEADING_OFFSET = 3.0;
 
     static final int RED_TRESHOLD = 5;
     static final int BLUE_TRESHOLD = 5;
@@ -169,19 +169,14 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
         // Put a hold after each turn
-//        gyroDrive(DRIVE_SPEED, 18.0, 0.0); // Drive BWD 30 inches
-//        StopAllMotion(-1);
-//        gyroTurn(TURN_SPEED, 55.0);               // Turn to -60 Degrees
-//        StopAllMotion(-1);
-        gyroDrive(DRIVE_SPEED, 49, -50.0); // Drive BWD 63 inches
+        gyroDrive(DRIVE_SPEED, 51, -50.0); // Drive BWD 49 inches
         if (!opModeIsActive())
         {
             StopAllMotion();
             return;
         }
 
-//        StopAllMotion();
-        gyroTurn(TURN_SPEED, -20.0);               // Turn to -10 degree
+        gyroTurn(TURN_SPEED, -20.0);               // Turn to -20 degree
 
         UltraSonicReachTheWall(WALL_APPROACHING_SPEED, 60, -15.0);
         if (!opModeIsActive())
@@ -190,9 +185,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
             return;
         }
 
-//        StopAllMotion();
-
-        gyroTurn(TURN_SPEED, -5.0);               // Turn to 0 degree
+        gyroTurn(TURN_SPEED, -5.0);               // Turn to -5.0 degree
         if (!opModeIsActive())
         {
             StopAllMotion();
@@ -214,6 +207,10 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
             StopAllMotion();
             return;
         }
+
+        // make ultrasonic sensor ready and give stable output when needed.
+        robot.ultra_back.getUltrasonicLevel();
+        robot.ultra_front.getUltrasonicLevel();
 
         // run the beacon light color detection and button pushing procedure
         StopAllMotion();
@@ -775,7 +772,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
                 // adjust relative speed based on ultrasound reading.
                 if ((Math.abs(error) >= WALL_DISTANCE_THRESHOLD) &&
-                        ((Math.abs(angleOffset) < WALL_TRACKING_MAX_HEADING_OFFSET) || (error * angleOffset * distance < 0))) {
+                        ((Math.abs(angleOffset) < WALL_TRACKING_MAX_HEADING_OFFSET) || (error * angleOffset * distance > 0))) {
 
                     steer = getSteer(error, P_WALL_TRACKING_COEFF);
 
