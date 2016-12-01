@@ -93,10 +93,10 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
     // These constants define the desired driving/control characteristics
     // The can/should be tweaked to suite the specific robot drive train.
     static final double DRIVE_SPEED = 1.0;     // Nominal speed for better accuracy.
-    static final double TURN_SPEED = 0.6;     // Nominal half speed for better accuracy.
-    static final double WALL_APPROACHING_SPEED = 0.3;
-    static final double LINE_DETECTION_SPEED = 0.06;
-    static final double WALL_TRAVELING_SPEED = 0.3;
+    static final double TURN_SPEED = 0.3;     // Nominal half speed for better accuracy.
+    static final double WALL_APPROACHING_SPEED = 0.4;
+    static final double LINE_DETECTION_SPEED = 0.12;
+    static final double WALL_TRAVELING_SPEED = 0.35;
     static final double HEADING_THRESHOLD = 2;      // As tight as we can make it with an integer gyro
     static final double P_TURN_COEFF = 0.5;     // Larger is more responsive, but also less stable
     static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
@@ -170,40 +170,92 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
 //        StopAllMotion(-1);
 //        gyroTurn(TURN_SPEED, -55.0);               // Turn to -60 Degrees
 //        StopAllMotion(-1);
-        gyroDrive(DRIVE_SPEED, -63, 50.0); // Drive BWD 63 inches
+        gyroDrive(DRIVE_SPEED, -49, 50.0); // Drive BWD 63 inches
+        if (!opModeIsActive())
+        {
+            StopAllMotion();
+            return;
+        }
+
 //        StopAllMotion();
-//        gyroTurn(TURN_SPEED, -30.0);               // Turn to -10 degree
-//        StopAllMotion(-1);
+        gyroTurn(TURN_SPEED, 20.0);               // Turn to -10 degree
+
         UltraSonicReachTheWall(WALL_APPROACHING_SPEED, -60, 15.0);
+        if (!opModeIsActive())
+        {
+            StopAllMotion();
+            return;
+        }
+
 //        StopAllMotion();
 
-        gyroTurn(TURN_SPEED, 0.0);               // Turn to 0 degree
-
-        telemetry.addData("Initial Path", "Complete");
-        telemetry.update();
+        gyroTurn(TURN_SPEED, 5.0);               // Turn to 0 degree
+        if (!opModeIsActive())
+        {
+            StopAllMotion();
+            return;
+        }
 
         /* ------ ultrasonic wall tracker + white line detection ------- */
         // Drive forward to align with the wall and park at far line
         WallTrackingToWhiteLine(WALL_TRAVELING_SPEED, -80, 0, true, BACK_LIGHT_SENSOR);
-//        StopAllMotion();
+        if (!opModeIsActive())
+        {
+            StopAllMotion();
+            return;
+        }
+
         WallTrackingToWhiteLine(LINE_DETECTION_SPEED, -18, 0, true, CENTER_LIGHT_SENSOR);
-//        StopAllMotion();
+        if (!opModeIsActive())
+        {
+            StopAllMotion();
+            return;
+        }
+
         // run the beacon light color detection and button pushing procedure
+        StopAllMotion();
         ColorDetectionAndButtonPushing();
+        if (!opModeIsActive())
+        {
+            StopAllMotion();
+            return;
+        }
 
         // Drive forward to detect the near line
         WallTrackingToWhiteLine(WALL_TRAVELING_SPEED, 80.0, 0, true, FRONT_LIGHT_SENSOR);
-//        StopAllMotion();
+        if (!opModeIsActive())
+        {
+            StopAllMotion();
+            return;
+        }
+
         WallTrackingToWhiteLine(LINE_DETECTION_SPEED, 18.0, 0.0, true, CENTER_LIGHT_SENSOR);
-//        StopAllMotion();
+        if (!opModeIsActive())
+        {
+            StopAllMotion();
+            return;
+        }
+
         // run the beacon light color detection and button pushing procedure
+        StopAllMotion();
         ColorDetectionAndButtonPushing();
+        if (!opModeIsActive())
+        {
+            StopAllMotion();
+            return;
+        }
 
         /*------ drive to the center vortex ------*/
-        gyroDrive(DRIVE_SPEED, -36.00, -90.0); // -90 degree
-        StopAllMotion();
-        gyroDrive(DRIVE_SPEED, -45.00, -115.0); // -115 degree
+        gyroDrive(DRIVE_SPEED, -30.00, -90.0); // -90 degree
+        if (!opModeIsActive())
+        {
+            StopAllMotion();
+            return;
+        }
 
+        gyroDrive(DRIVE_SPEED, -28.00, -110.0); // -115 degree
+
+        // Finally, stop
         StopAllMotion();
     }
 
@@ -482,7 +534,7 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
         double steer;
         double leftSpeed;
         double rightSpeed;
-        double ultraSoundLevel, oldUltraLevel;
+        double ultraSoundLevel;
         double blackLightLevel, lightLevel;
 
         // Ensure that the opmode is still active
@@ -582,7 +634,7 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
                 } else if (ultraSoundLevel == 255) {
                     // error reading. Ignore.
                     continue;
-                } else if (ultraSoundLevel <= TARGET_WALL_DISTANCE) {
+                } else if (ultraSoundLevel <= TARGET_WALL_DISTANCE+2) {
 
                     System.out.println("--RedNear log-- wall reached -- ultrasound level=" + ultraSoundLevel);
 
@@ -705,7 +757,7 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
                 }
 
                 error = ultraSoundLevel - TARGET_WALL_DISTANCE;
-                
+
                 ct3++;
                 if (ct3 > 1000) {
                     ct3 = 0;
@@ -849,7 +901,7 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
 
         // keep looping while we have time remaining.
         holdTimer.reset();
-        while (holdTimer.time() < holdTime) {
+        while (opModeIsActive() && (holdTimer.time() < holdTime)) {
 
             red = robot.beaconColorSensor.red();
             green = robot.beaconColorSensor.green();
@@ -857,13 +909,13 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
 
             System.out.println("--BlueNear log-- R:G:B = " + red + ":" + green + ":" + blue);
 
-            if ((red > blue + 20) && (red > green + 20)) {
+            if ((red > blue + 10) && (red > green + 10)) {
                 redCheck++;
             } else {
                 redCheck = 0;
             }
 
-            if ((blue > red + 5) && (blue > green)) {
+            if ((blue > red) && (blue > green)) {
                 blueCheck++;
             } else {
                 blueCheck = 0;
