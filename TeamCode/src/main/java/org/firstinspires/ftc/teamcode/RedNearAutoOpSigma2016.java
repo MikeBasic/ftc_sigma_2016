@@ -102,7 +102,7 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
     static final double P_TURN_COEFF = 0.5;     // Larger is more responsive, but also less stable
     static final double P_DRIVE_COEFF = 0.15;     // Larger is more responsive, but also less stable
     static final double P_WALL_TRACKING_COEFF = 0.1;     // Larger is more responsive, but also less stable
-    static final double TARGET_WALL_DISTANCE = 13.0;  // ultrasound sensor reading for x inch away from wall
+    static final double TARGET_WALL_DISTANCE = 14.0;  // ultrasound sensor reading for x inch away from wall
     static final double WALL_DISTANCE_THRESHOLD = 1.0; // no need to adjust if wall distance is within range
     static final double WALL_TRACKING_MAX_HEADING_OFFSET = 3.0;
 
@@ -253,7 +253,7 @@ public class RedNearAutoOpSigma2016 extends LinearOpMode {
             return;
         }
 
-        gyroDrive(DRIVE_SPEED, -28.00, -110.0); // -115 degree
+        gyroDrive(DRIVE_SPEED, -33.00, -103.0); // -115 degree
 
         // Finally, stop
         StopAllMotion();

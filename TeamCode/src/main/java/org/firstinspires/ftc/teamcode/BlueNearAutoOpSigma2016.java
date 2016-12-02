@@ -253,7 +253,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
             return;
         }
 
-        gyroDrive(DRIVE_SPEED, 28.00, 110.0); // -115 degree
+        gyroDrive(DRIVE_SPEED, 33.00, 103.0); // -115 degree
 
         // Finally, stop
         StopAllMotion();
