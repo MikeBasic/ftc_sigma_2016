@@ -25,9 +25,9 @@ public class HardwareSigma2016
     public int groundbrightness_center=0;
     public int groundbrightness_front=0;
     public int groundbrightness_back=0;
-    public final double FRONT_LIGHT_THRESH = 2.5;
-    public final double BACK_LIGHT_THRESH = 2.5;
-    public final double CENTER_LIGHT_THRESH = 2.5;
+    public final double FRONT_LIGHT_THRESH = 1.8;
+    public final double BACK_LIGHT_THRESH = 1.8;
+    public final double CENTER_LIGHT_THRESH = 3.0;
 
     /* Public OpMode members. */
     public DcMotor  backLeftMotor = null;
@@ -90,7 +90,6 @@ public class HardwareSigma2016
 
         // light sensor on the robot bottom
         lineLightSensor = hwMap.colorSensor.get("line_light");
-
         lineLightSensor.enableLed(true);
         try {
             Thread.sleep(1000);
@@ -104,11 +103,11 @@ public class HardwareSigma2016
         beaconColorSensor.enableLed(false);
 
         front_light = hwMap.colorSensor.get("front_light");
-        front_light.enableLed(true);
+        front_light.enableLed(false);
         groundbrightness_front = front_light.red() + front_light.green() + front_light.blue();
 
         back_light = hwMap.colorSensor.get("back_light");
-        back_light.enableLed(true);
+        back_light.enableLed(false);
         groundbrightness_back = back_light.red() + back_light.green() + back_light.blue();
 
         // ultrasonic sensor
