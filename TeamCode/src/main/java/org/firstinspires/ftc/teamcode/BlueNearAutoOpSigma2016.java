@@ -93,20 +93,22 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
     // These constants define the desired driving/control characteristics
     // The can/should be tweaked to suite the specific robot drive train.
-    static final double DRIVE_SPEED = 0.6;     // Nominal speed for better accuracy.
-    static final double P_DRIVE_COEFF = 0.02;     // Larger is more responsive, but also less stable
+    static final double DRIVE_SPEED = 0.9;     // Nominal speed for better accuracy.
+    static final double P_DRIVE_COEFF = 0.1;     // Larger is more responsive, but also less stable
 
-    static final double TURN_SPEED = 0.1;     // Nominal half speed for better accuracy.
+    static final double TURN_SPEED = 0.2;     // Nominal half speed for better accuracy.
     static final double TURN_THRESHOLD = 2;      // As tight as we can make it with an integer gyro
-    static final double P_TURN_COEFF = 0.1;     // Larger is more responsive, but also less stable
+    static final double P_TURN_COEFF = 0.05;     // Larger is more responsive, but also less stable
+
+    static final double maxLeftRightSpeedDifferential = 0.3;
 
     static final double WALL_APPROACHING_SPEED = 0.4;
-    static final double P_WALL_APPROACHING_COEFF = 0.02;
+    static final double P_WALL_APPROACHING_COEFF = 0.1;
 
-    static final double LINE_DETECTION_SPEED = 0.03;
+    static final double LINE_DETECTION_SPEED = 0.06;
     static final double WALL_TRAVELING_SPEED = 0.3;
-    static final double P_WALL_TRACKING_COEFF_FINE = 0.03;// Larger is more responsive, but also less stable
-    static final double P_WALL_TRACKING_COEFF_COARSE = 0.075;// Larger is more responsive, but also less stable
+    static final double P_WALL_TRACKING_COEFF_FINE = 0.06;// Larger is more responsive, but also less stable
+    static final double P_WALL_TRACKING_COEFF_COARSE = 0.1;// Larger is more responsive, but also less stable
 
     static final double TARGET_WALL_DISTANCE_FORWARD = 8;  // ultrasound sensor reading for x inch away from wall
     static final double TARGET_WALL_DISTANCE_BACKWARD = 10;
@@ -179,14 +181,14 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
         // Put a hold after each turn
-        gyroDrive(DRIVE_SPEED, 60, -45.0); // Drive FWD 60 inches along -45 degree
+        gyroDrive(DRIVE_SPEED, 83, -50.0); // Drive FWD 81 inches along -50 degree
         StopAllMotion();
         if (!opModeIsActive()) {
             return;
         }
 
         // Turn to -20 degree. Make the turn coeff huge so full TURN_SPEED power will be used.
-        gyroTurn(TURN_SPEED, -20.0, 100.0);
+        gyroTurn(TURN_SPEED, -20.0, P_TURN_COEFF);
         StopAllMotion();
         if (!opModeIsActive()) {
             return;
@@ -200,7 +202,7 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
 
         // Turn to 0.0 degree with speed TURN_SPEED. Make the turn coeff huge so full TURN_SPEED power will be used.
         // Otherwise the robot could stuck because only a portion of TURN_SPEED power is applied.
-        gyroTurn(TURN_SPEED, 0.0, 100.0);
+        gyroTurn(TURN_SPEED, 0.0, P_TURN_COEFF);
         StopAllMotion();
         if (!opModeIsActive()) {
             return;
@@ -256,13 +258,13 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
         }
 
         /*------ drive to the center vortex ------*/
-        gyroDrive(DRIVE_SPEED, 40.00, 90.0); // -90 degree
+        gyroDrive(DRIVE_SPEED, 60.00, 90.0); // -90 degree
         if (!opModeIsActive()) {
             StopAllMotion();
             return;
         }
 
-        gyroDrive(DRIVE_SPEED, 40.00, 103.0); // -115 degree
+        gyroDrive(DRIVE_SPEED, 43.00, 103.0); // -115 degree
 
         // Finally, stop
         StopAllMotion();
@@ -365,8 +367,12 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                 leftSpeed = speed - steer;
                 rightSpeed = speed + steer;
 
-                leftSpeed = Range.clip(leftSpeed, speed - Math.abs(0.2 * speed), speed + Math.abs(0.2 * speed));
-                rightSpeed = Range.clip(rightSpeed, speed - Math.abs(0.2 * speed), speed + Math.abs(0.2 * speed));
+                leftSpeed = Range.clip(leftSpeed,
+                        speed - Math.abs(maxLeftRightSpeedDifferential * speed),
+                        speed + Math.abs(maxLeftRightSpeedDifferential * speed));
+                rightSpeed = Range.clip(rightSpeed,
+                        speed - Math.abs(maxLeftRightSpeedDifferential * speed),
+                        speed + Math.abs(maxLeftRightSpeedDifferential * speed));
 
                 robot.frontLeftMotor.setPower(leftSpeed);
                 robot.frontRightMotor.setPower(rightSpeed);
@@ -626,8 +632,12 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                 leftSpeed = speed - steer;
                 rightSpeed = speed + steer;
 
-                leftSpeed = Range.clip(leftSpeed, speed - Math.abs(0.2 * speed), speed + Math.abs(0.2 * speed));
-                rightSpeed = Range.clip(rightSpeed, speed - Math.abs(0.2 * speed), speed + Math.abs(0.2 * speed));
+                leftSpeed = Range.clip(leftSpeed,
+                        speed - Math.abs(maxLeftRightSpeedDifferential * speed),
+                        speed + Math.abs(maxLeftRightSpeedDifferential * speed));
+                rightSpeed = Range.clip(rightSpeed,
+                        speed - Math.abs(maxLeftRightSpeedDifferential * speed),
+                        speed + Math.abs(maxLeftRightSpeedDifferential * speed));
 
                 robot.frontLeftMotor.setPower(leftSpeed);
                 robot.frontRightMotor.setPower(rightSpeed);
@@ -820,8 +830,12 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                     leftSpeed = speed + steer;
                     rightSpeed = speed - steer;
 
-                    leftSpeed = Range.clip(leftSpeed, speed - Math.abs(0.2 * speed), speed + Math.abs(0.2 * speed));
-                    rightSpeed = Range.clip(rightSpeed, speed - Math.abs(0.2 * speed), speed + Math.abs(0.2 * speed));
+                    leftSpeed = Range.clip(leftSpeed,
+                            speed - Math.abs(maxLeftRightSpeedDifferential * speed),
+                            speed + Math.abs(maxLeftRightSpeedDifferential * speed));
+                    rightSpeed = Range.clip(rightSpeed,
+                            speed - Math.abs(maxLeftRightSpeedDifferential * speed),
+                            speed + Math.abs(maxLeftRightSpeedDifferential * speed));
 
                     robot.frontLeftMotor.setPower(leftSpeed);
                     robot.frontRightMotor.setPower(rightSpeed);
@@ -847,8 +861,12 @@ public class BlueNearAutoOpSigma2016 extends LinearOpMode {
                         leftSpeed = speed - steer;
                         rightSpeed = speed + steer;
 
-                        leftSpeed = Range.clip(leftSpeed, speed - Math.abs(0.2 * speed), speed + Math.abs(0.2 * speed));
-                        rightSpeed = Range.clip(rightSpeed, speed - Math.abs(0.2 * speed), speed + Math.abs(0.2 * speed));
+                        leftSpeed = Range.clip(leftSpeed,
+                                speed - Math.abs(maxLeftRightSpeedDifferential * speed),
+                                speed + Math.abs(maxLeftRightSpeedDifferential * speed));
+                        rightSpeed = Range.clip(rightSpeed,
+                                speed - Math.abs(maxLeftRightSpeedDifferential * speed),
+                                speed + Math.abs(maxLeftRightSpeedDifferential * speed));
 
                         robot.frontLeftMotor.setPower(leftSpeed);
                         robot.frontRightMotor.setPower(rightSpeed);
