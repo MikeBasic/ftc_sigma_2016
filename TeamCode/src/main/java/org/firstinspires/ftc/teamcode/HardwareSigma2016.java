@@ -103,11 +103,11 @@ public class HardwareSigma2016
         beaconColorSensor.enableLed(false);
 
         front_light = hwMap.colorSensor.get("front_light");
-        front_light.enableLed(false);
+        front_light.enableLed(true);
         groundbrightness_front = front_light.red() + front_light.green() + front_light.blue();
 
         back_light = hwMap.colorSensor.get("back_light");
-        back_light.enableLed(false);
+        back_light.enableLed(true);
         groundbrightness_back = back_light.red() + back_light.green() + back_light.blue();
 
         // ultrasonic sensor
